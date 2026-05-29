@@ -23,7 +23,9 @@ jobs:
           xcode-version: latest-stable
 
       - name: Make gradlew executable
-        run: chmod +x ./gradlew :composeApp:compileKotlinIosArm64 --stacktrace --info
+        run: 
+           chmod +x ./gradlew
+           ./gradlew :composeApp:compileKotlinIosArm64 --stacktrace --info
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
