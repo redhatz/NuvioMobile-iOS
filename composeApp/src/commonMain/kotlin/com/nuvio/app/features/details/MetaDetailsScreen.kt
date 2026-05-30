@@ -485,21 +485,12 @@ fun MetaDetailsScreen(
                 }
                 val playText = stringResource(Res.string.action_play)
                 val resumeText = stringResource(Res.string.action_resume)
-                val watchAgainText = stringResource(Res.string.action_watch_again)
-                val isMovieWatched = remember(meta.id, meta.type, hasEpisodes, watchedUiState.watchedKeys) {
-                    meta.type != "series" && !hasEpisodes && WatchedRepository.isWatched(
-                        id = meta.id,
-                        type = meta.type,
-                    )
-                }
-                val playButtonLabel = remember(movieProgress, isMovieWatched, seriesAction, meta.type, hasEpisodes, playText, resumeText, watchAgainText) {
+                val playButtonLabel = remember(movieProgress, seriesAction, meta.type, hasEpisodes, playText, resumeText) {
                     when {
                         (meta.type == "series" || hasEpisodes) && seriesAction != null ->
                             seriesAction.label
                         meta.type != "series" && !hasEpisodes && movieProgress != null ->
                             resumeText
-                        isMovieWatched ->
-                            watchAgainText
                         else -> playText
                     }
                 }
