@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.rounded.LiveTv
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -136,8 +135,6 @@ import com.nuvio.app.features.library.LibrarySourceMode
 import com.nuvio.app.features.library.LibraryScreen
 import com.nuvio.app.features.library.toLibraryItem
 import com.nuvio.app.features.library.toMetaPreview
-import com.nuvio.app.features.livetv.LiveTvChannel
-import com.nuvio.app.features.livetv.LiveTvScreen
 import com.nuvio.app.features.notifications.EpisodeReleaseNotificationsRepository
 import com.nuvio.app.features.player.PlayerLaunch
 import com.nuvio.app.features.player.PlayerLaunchStore
@@ -299,7 +296,6 @@ enum class AppScreenTab {
     Home,
     Search,
     Library,
-    LiveTv,
     Settings,
 }
 
@@ -307,7 +303,6 @@ private fun AppScreenTab.toNativeNavigationTab(): NativeNavigationTab = when (th
     AppScreenTab.Home -> NativeNavigationTab.Home
     AppScreenTab.Search -> NativeNavigationTab.Search
     AppScreenTab.Library -> NativeNavigationTab.Library
-    AppScreenTab.LiveTv -> NativeNavigationTab.LiveTv
     AppScreenTab.Settings -> NativeNavigationTab.Settings
 }
 
@@ -315,7 +310,6 @@ private fun NativeNavigationTab.toAppScreenTab(): AppScreenTab = when (this) {
     NativeNavigationTab.Home -> AppScreenTab.Home
     NativeNavigationTab.Search -> AppScreenTab.Search
     NativeNavigationTab.Library -> AppScreenTab.Library
-    NativeNavigationTab.LiveTv -> AppScreenTab.LiveTv
     NativeNavigationTab.Settings -> AppScreenTab.Settings
 }
 
@@ -571,7 +565,6 @@ private fun MainAppContent(
         val homeScrollToTopRequests = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
         val searchScrollToTopRequests = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
         val libraryScrollToTopRequests = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
-        val liveTvScrollToTopRequests = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
         val settingsRootActionRequests = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
         val currentBackStackEntry by navController.currentBackStackEntryAsState()
         val liquidGlassNativeTabBarEnabled by remember {
@@ -640,7 +633,6 @@ private fun MainAppContent(
                 searchScrollToTopRequests.tryEmit(Unit)
             }
             AppScreenTab.Library -> libraryScrollToTopRequests.tryEmit(Unit)
-            AppScreenTab.LiveTv -> liveTvScrollToTopRequests.tryEmit(Unit)
             AppScreenTab.Settings -> settingsRootActionRequests.tryEmit(Unit)
         }
     }
@@ -1142,24 +1134,6 @@ private fun MainAppContent(
             selectedContinueWatchingForActions = item
         }
 
-        val onLiveTvChannelClick: (LiveTvChannel) -> Unit = { channel ->
-            val launchId = PlayerLaunchStore.put(
-                PlayerLaunch(
-                    title = channel.name,
-                    sourceUrl = channel.streamUrl,
-                    logo = channel.logoUrl,
-                    streamTitle = channel.name,
-                    streamSubtitle = channel.group,
-                    providerName = "Live TV",
-                    contentType = "live",
-                    videoId = channel.id,
-                    parentMetaId = channel.id,
-                    parentMetaType = "live",
-                ),
-            )
-            navController.navigate(PlayerRoute(launchId = launchId))
-        }
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -1223,12 +1197,6 @@ private fun MainAppContent(
                                             contentDescription = stringResource(Res.string.compose_nav_library),
                                         )
                                         NavItem(
-                                            selected = selectedTab == AppScreenTab.LiveTv,
-                                            onClick = { handleRootTabClick(AppScreenTab.LiveTv) },
-                                            icon = Icons.Rounded.LiveTv,
-                                            contentDescription = stringResource(Res.string.compose_nav_live_tv),
-                                        )
-                                        NavItem(
                                             selected = selectedTab == AppScreenTab.Settings,
                                             onClick = { handleRootTabClick(AppScreenTab.Settings) },
                                         ) {
@@ -1257,7 +1225,6 @@ private fun MainAppContent(
                                         homeScrollToTopRequests = homeScrollToTopRequests,
                                         searchScrollToTopRequests = searchScrollToTopRequests,
                                         libraryScrollToTopRequests = libraryScrollToTopRequests,
-                                        liveTvScrollToTopRequests = liveTvScrollToTopRequests,
                                         settingsRootActionRequests = settingsRootActionRequests,
                                         animateHomeCollectionGifs = tabsRouteActive,
                                         onCatalogClick = onCatalogClick,
@@ -1302,7 +1269,6 @@ private fun MainAppContent(
                                             requestedSettingsPageName = "Debrid"
                                             selectedTab = AppScreenTab.Settings
                                         },
-                                        onLiveTvChannelClick = onLiveTvChannelClick,
                                         onContinueWatchingClick = onContinueWatchingClick,
                                         onContinueWatchingLongPress = onContinueWatchingLongPress,
                                         onSwitchProfile = onSwitchProfile,
@@ -2433,7 +2399,6 @@ private fun AppTabHost(
     homeScrollToTopRequests: Flow<Unit>,
     searchScrollToTopRequests: Flow<Unit>,
     libraryScrollToTopRequests: Flow<Unit>,
-    liveTvScrollToTopRequests: Flow<Unit>,
     settingsRootActionRequests: Flow<Unit>,
     animateHomeCollectionGifs: Boolean = true,
     onCatalogClick: ((HomeCatalogSection) -> Unit)? = null,
@@ -2444,7 +2409,6 @@ private fun AppTabHost(
     onLibrarySectionViewAllClick: ((LibrarySection) -> Unit)? = null,
     onCloudFilePlay: ((CloudLibraryItem, CloudLibraryFile) -> Unit)? = null,
     onConnectCloudClick: (() -> Unit)? = null,
-    onLiveTvChannelClick: (LiveTvChannel) -> Unit = {},
     onContinueWatchingClick: ((ContinueWatchingItem) -> Unit)? = null,
     onContinueWatchingLongPress: ((ContinueWatchingItem) -> Unit)? = null,
     onSwitchProfile: (() -> Unit)? = null,
@@ -2503,14 +2467,6 @@ private fun AppTabHost(
                         onSectionViewAllClick = onLibrarySectionViewAllClick,
                         onCloudFilePlay = onCloudFilePlay,
                         onConnectCloudClick = onConnectCloudClick,
-                    )
-                }
-
-                AppScreenTab.LiveTv -> {
-                    LiveTvScreen(
-                        modifier = Modifier.fillMaxSize(),
-                        scrollToTopRequests = liveTvScrollToTopRequests,
-                        onChannelClick = onLiveTvChannelClick,
                     )
                 }
 
@@ -2611,23 +2567,6 @@ private fun TabletFloatingTopBar(
                             contentDescription = stringResource(Res.string.compose_nav_library),
                             modifier = Modifier.size(18.dp),
                             tint = if (selectedTab == AppScreenTab.Library) {
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                        )
-                    },
-                )
-                TabletTopPillItem(
-                    label = stringResource(Res.string.compose_nav_live_tv),
-                    selected = selectedTab == AppScreenTab.LiveTv,
-                    onClick = { onTabSelected(AppScreenTab.LiveTv) },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Rounded.LiveTv,
-                            contentDescription = stringResource(Res.string.compose_nav_live_tv),
-                            modifier = Modifier.size(18.dp),
-                            tint = if (selectedTab == AppScreenTab.LiveTv) {
                                 MaterialTheme.colorScheme.onPrimaryContainer
                             } else {
                                 MaterialTheme.colorScheme.onSurfaceVariant
