@@ -14,9 +14,6 @@ jobs:
       - name: Checkout Repository & Submodules
         uses: actions/checkout@v4
 
-      - name: Fetch iOS Specific Submodule
-        run: git submodule update --init --recursive MPVKit
-
       - name: Select Latest Stable Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
